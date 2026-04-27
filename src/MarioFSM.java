@@ -22,6 +22,7 @@ public class MarioFSM extends JPanel implements ActionListener {
 
     private int SCREEN_WIDTH;
     private int SCREEN_HEIGHT;
+    private BufferedImage marioJumping;
 
     enum State {IDLE, MOVING, JUMP_IDLE, JUMP_MOVING, CROUCHING}
     int[][] table = {
@@ -69,6 +70,10 @@ public class MarioFSM extends JPanel implements ActionListener {
         try {
             // Loading images from the project folder
             marioSprite = ImageIO.read(new File("resources/mario_idle.png"));
+            marioJumping = ImageIO.read(new File("resources/mario_jumping.png"));
+//            marioSprite = ImageIO.read(new File("D:\\Projects\\Spring Boot\\Mario - Application of Finite State Machine\\resources\\mario_idle.png"));
+//            marioJumping = ImageIO.read(new File("D:\\Projects\\Spring Boot\\Mario - Application of Finite State Machine\\resources\\mario_jumping.png"));
+
 //            background = ImageIO.read(new File("resources/background.png"));
         } catch (IOException e) {
             System.out.println("Error: Could not find image files!");
@@ -190,12 +195,14 @@ public class MarioFSM extends JPanel implements ActionListener {
         // Physics logic for JUMPING state
         if (currentState == State.JUMP_IDLE) {
             performJump();
-        } else if (currentState == State.JUMP_MOVING){
-            performMove();
+        }
+
+        if (currentState == State.JUMP_MOVING){
+//            performMove();
             performJump();
         }
 
-        if (currentState == State.MOVING){
+        if (currentState == State.MOVING || currentState == State.JUMP_MOVING) {
             performMove();
         }
         repaint();
@@ -213,10 +220,12 @@ public class MarioFSM extends JPanel implements ActionListener {
 
         if (marioSprite != null) {
             BufferedImage newMario = marioSprite;
-            if(lastFacingDirection == LEFT)
+            if(lastFacingDirection == LEFT && (currentState !=  State.JUMP_IDLE && currentState != State.JUMP_MOVING))
                 newMario = createFlipped(marioSprite);
-            else if (lastFacingDirection == RIGHT)
+            else if (lastFacingDirection == RIGHT && (currentState !=  State.JUMP_IDLE && currentState != State.JUMP_MOVING))
                 newMario = marioSprite;
+            else if (currentState ==  State.JUMP_IDLE || currentState == State.JUMP_MOVING)
+                newMario = marioJumping;
 
             if (currentState == State.CROUCHING) {
                 // Draw Mario shorter/squashed
@@ -224,6 +233,20 @@ public class MarioFSM extends JPanel implements ActionListener {
             } else {
                 // Draw Mario normally
                     g.drawImage(newMario, marioX, marioY,40, 50, null);
+//                if(direction == LEFT) {
+//                    g.drawImage(marioSprite, marioX, marioY, -40, 50, null);
+//                } else if (direction == RIGHT)
+//                    g.drawImage(marioSprite, marioX, marioY, 40, 50, null);
+            }
+        } else {
+            g.setColor(Color.RED);
+            if (currentState == State.CROUCHING) {
+                // Draw Mario shorter/squashed
+//                g.drawImage(newMario, marioX, marioY + 20, 40, 30, null);
+                g.fillRect(marioX, marioY + 20, 40, 30);
+            } else {
+                // Draw Mario normally
+                g.fillRect(marioX, marioY, 40, 50);
 //                if(direction == LEFT) {
 //                    g.drawImage(marioSprite, marioX, marioY, -40, 50, null);
 //                } else if (direction == RIGHT)

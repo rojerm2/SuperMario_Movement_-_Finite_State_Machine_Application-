@@ -6,7 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="9d1f11d5-47ff-4c34-87f0-569f4bb3e1c7" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Mario - Application of Finite State Machine/Main.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Mario - Application of Finite State Machine/MarioFSM$1.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Mario - Application of Finite State Machine/MarioFSM$State.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/Mario - Application of Finite State Machine/MarioFSM.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MarioFSM.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/MarioFSM.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,19 +41,23 @@
     "Application.Main.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
     "git-widget-placeholder": "main",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "D:/Projects/Spring Boot/Mario - Application of Finite State Machine/resources",
+    "last_opened_file_path": "D:/Projects/Spring Boot/Mario - Application of Finite State Machine",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "onboarding.tips.debug.path": "D:/Projects/Spring Boot/Mario - Application of Finite State Machine/src/Main.java",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
     "to.speed.mode.migration.done": "true",
     "vue.rearranger.settings.migration": "true"
   }
@@ -63,6 +71,21 @@
       <recent name="D:\Projects\Spring Boot\Mario - Application of Finite State Machine\src" />
     </key>
   </component>
+  <component name="RunManager">
+    <configuration name="Main" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="UNNAMED_CLASS_CONFIGURATION" value="true" />
+      <option name="MAIN_CLASS_NAME" value="Main" />
+      <module name="Mario - Application of Finite State Machine" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.Main" />
+      </list>
+    </recent_temporary>
+  </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="9d1f11d5-47ff-4c34-87f0-569f4bb3e1c7" name="Changes" comment="" />
@@ -71,7 +94,8 @@
       <option name="presentableId" value="Default" />
       <updated>1775983762601</updated>
       <workItem from="1775983763926" duration="4029000" />
-      <workItem from="1777288623189" duration="9887000" />
+      <workItem from="1777288623189" duration="10273000" />
+      <workItem from="1777300556974" duration="1693000" />
     </task>
     <servers />
   </component>
@@ -85,6 +109,21 @@
           <url>file://$PROJECT_DIR$/src/MarioFSM.java</url>
           <line>108</line>
           <option name="timeStamp" value="7" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/MarioFSM.java</url>
+          <line>73</line>
+          <option name="timeStamp" value="8" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/MarioFSM.java</url>
+          <line>220</line>
+          <option name="timeStamp" value="10" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/MarioFSM.java</url>
+          <line>248</line>
+          <option name="timeStamp" value="11" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
