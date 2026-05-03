@@ -1,4 +1,5 @@
 import javax.imageio.ImageIO;
+import javax.sound.sampled.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -9,6 +10,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 
 public class MarioFSM extends JPanel implements ActionListener {
 
@@ -19,6 +21,9 @@ public class MarioFSM extends JPanel implements ActionListener {
     public static final int SPACE = 4;
     public static final int RELEASE_DOWN = 5;
     public static final int DOWN = 6;
+    public static final int PNG_MARIO_SPRITE_HEIGHT = 56;
+
+    private Clip clip;
 
     private int SCREEN_WIDTH;
     private int SCREEN_HEIGHT;
@@ -38,7 +43,7 @@ public class MarioFSM extends JPanel implements ActionListener {
 
     int state = 0, input = 0;
 
-    private BufferedImage marioSprite, marioMoving;
+    private BufferedImage marioSprite, marioMoving, marioCrouching, marioMoving_1, marioMoving_2, marioMoving_3, marioStopping;
     private BufferedImage background;
 
     private State currentState = State.IDLE;
@@ -47,11 +52,16 @@ public class MarioFSM extends JPanel implements ActionListener {
     private final int GROUND_Y = 268;
     private int direction = 0;
     private int lastFacingDirection = RIGHT;
+    private int currentWalkState = 0;
+    private double walkCounter = 0;
+    private int walkingMomentum = 0;
+    private boolean isDecelarating = false;
 
     public MarioFSM(int screenWidth, int screenHeight) {
         SCREEN_WIDTH = screenWidth;
         SCREEN_HEIGHT = screenHeight;
         loadImages();
+        loadSound();
         Timer timer = new Timer(20, this);
         timer.start();
         setFocusable(true);
@@ -71,14 +81,14 @@ public class MarioFSM extends JPanel implements ActionListener {
 
     private void loadImages() {
         try {
-            // Loading images from the project folder
             marioSprite = ImageIO.read(new File("../resources/mario_idle.png"));
             marioJumping = ImageIO.read(new File("../resources/mario_jumping.png"));
-            marioMoving = ImageIO.read(new File("../resources/mario_moving.gif"));
-            // marioSprite = ImageIO.read(new File("D:\\Projects\\Spring Boot\\Mario -
-            // Application of Finite State Machine\\resources\\mario_idle.png"));
-            // marioJumping = ImageIO.read(new File("D:\\Projects\\Spring Boot\\Mario -
-            // Application of Finite State Machine\\resources\\mario_jumping.png"));
+            marioMoving = ImageIO.read(new File("../resources/mario_moving.png"));
+            marioCrouching = ImageIO.read(new File("../resources/mario_crouching.png"));
+            marioMoving_1 = ImageIO.read(new File("../resources/mario_moving_1.png"));
+            marioMoving_2 = ImageIO.read(new File("../resources/mario_moving_2.png"));
+            marioMoving_3 = ImageIO.read(new File("../resources/mario_moving_3.png"));
+            marioStopping = ImageIO.read(new File("../resources/mario_stopping.png"));
 
             // background = ImageIO.read(new File("resources/background.png"));
         } catch (IOException e) {
@@ -88,55 +98,46 @@ public class MarioFSM extends JPanel implements ActionListener {
     }
 
     public void handleInput(int keyCode, boolean pressed) {
-        // switch (currentState) {
-        // case IDLE:
-        // if (pressed && keyCode == KeyEvent.VK_RIGHT){
-        // direction = 1;
-        // currentState = State.MOVING;
-        // }
-        // if (pressed && keyCode == KeyEvent.VK_LEFT){
-        // direction = 0;
-        // currentState = State.MOVING;
-        // }
-        // if (pressed && keyCode == KeyEvent.VK_SPACE) startJump();
-        // if (pressed && keyCode == KeyEvent.VK_DOWN) currentState = State.CROUCHING;
-        // break;
-        //
-        // case MOVING:
-        // if (!pressed && keyCode == KeyEvent.VK_RIGHT || keyCode == KeyEvent.VK_LEFT)
-        // currentState = State.IDLE;
-        // if (pressed && keyCode == KeyEvent.VK_SPACE) startJump();
-        // break;
-        //
-        // case JUMPING:
-        // // In a pure DFA, transitions out of JUMPING
-        // // usually happen via physics events, not just key presses.
-        // break;
-        //
-        // case CROUCHING:
-        // if (!pressed && keyCode == KeyEvent.VK_DOWN) currentState = State.IDLE;
-        // break;
-        // }
-
         if (pressed && keyCode == KeyEvent.VK_LEFT) {
+            if(input == RIGHT) {
+                return;
+            }
+
             input = LEFT;
             direction = LEFT;
             lastFacingDirection = LEFT;
+
+            startMove();
         } else if (pressed && keyCode == KeyEvent.VK_RIGHT) {
+            if(input == LEFT) {
+                return;
+            }
+
             input = RIGHT;
             direction = RIGHT;
             lastFacingDirection = RIGHT;
+            
+            startMove();
         } else if (!pressed && keyCode == KeyEvent.VK_LEFT) {
             input = RELEASE_LEFT;
-            direction = RELEASE_LEFT;
+            // direction = RELEASE_LEFT;
+            isDecelarating = true;
+            // currentWalkState = 0;
+            // walkCounter = 0;
+            // walkingMomentum = 0;
         } else if (!pressed && keyCode == KeyEvent.VK_RIGHT) {
             input = RELEASE_RIGHT;
-            direction = RELEASE_RIGHT;
+            // direction = RELEASE_RIGHT;
+            isDecelarating = true;
+            // currentWalkState = 0;
+            // walkCounter = 0;
+            // walkingMomentum = 0;
         } else if (pressed && keyCode == KeyEvent.VK_SPACE) {
             input = SPACE;
             startJump();
         } else if (!pressed && keyCode == KeyEvent.VK_DOWN) {
             input = RELEASE_DOWN;
+            isDecelarating = true;
         } else if (pressed && keyCode == KeyEvent.VK_DOWN) {
             input = DOWN;
         }
@@ -146,6 +147,13 @@ public class MarioFSM extends JPanel implements ActionListener {
         state = table[state][input];
         currentState = State.values()[state];
         System.out.println(currentState);
+    }
+
+    private void startMove() {
+        if(currentState == State.IDLE || currentState == State.JUMP_IDLE) {
+            currentWalkState = 1;
+            walkingMomentum = 1;
+        }
     }
 
     private void printKey(int keyCode, boolean pressed) {
@@ -167,8 +175,18 @@ public class MarioFSM extends JPanel implements ActionListener {
     }
 
     private void startJump() {
-        if (currentState != State.JUMP_IDLE && currentState != State.JUMP_MOVING)
+        if (currentState != State.JUMP_IDLE && currentState != State.JUMP_MOVING) {
+            if (clip == null) {
+                loadSound();
+            }
+            if (clip != null) {
+                clip.stop();
+                clip.setFramePosition(0);
+                clip.start();
+            }
+            
             velocityY = -15; // Upward force
+        }
     }
 
     private void performJump() {
@@ -188,30 +206,72 @@ public class MarioFSM extends JPanel implements ActionListener {
     }
 
     private void performMove() {
+        if(currentState == State.MOVING || currentState == State.JUMP_MOVING) {
+            walkingMomentum += 1;
+            if (walkingMomentum > 32) { 
+                walkingMomentum = 32;
+            }
+        }
+
         if (direction == LEFT) {
-            if (marioX >= 8)
-                marioX -= 5;
+            if (marioX >= 8) {
+                // marioX -= 5;
+                marioX -= walkingMomentum / 8;
+            }
         } else if (direction == RIGHT) {
-            if (marioX <= SCREEN_WIDTH - 55)
-                marioX += 5;
+            if (marioX <= SCREEN_WIDTH - 55) {
+                // marioX += 5;
+                marioX += walkingMomentum / 8;
+            }
+        }
+
+        // if(currentState == State.IDLE || currentState == State.JUMP_IDLE) {
+        //     walkingMomentum -= 2; // Decrease momentum when not accelerating
+        //     if (walkingMomentum < 0) {
+        //         walkingMomentum = 0;
+        //     }
+        // }
+
+        // walkCounter = (walkCounter + 1) % 8; // Adjust this value to change walking animation speed
+        // walkCounter++;
+        walkCounter += (double) walkingMomentum / 16; // Adjust this value to change walking animation speed
+        if (walkCounter >= 4) { //Adjust this value to change walking animation speed
+            walkCounter = 0;
+
+            currentWalkState++;
+            if(currentWalkState >= 4) {
+                currentWalkState = 1;
+            }
         }
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        // Physics logic for JUMPING state
         if (currentState == State.JUMP_IDLE) {
             performJump();
-        }
-
-        if (currentState == State.JUMP_MOVING) {
-            // performMove();
+        } else if (currentState == State.JUMP_MOVING) {
             performJump();
-        }
-
+        } 
+        
         if (currentState == State.MOVING || currentState == State.JUMP_MOVING) {
             performMove();
         }
+        
+        if ((currentState == State.IDLE || currentState == State.JUMP_IDLE || currentState == State.CROUCHING) && isDecelarating) {
+            walkingMomentum -= 1;
+            if (walkingMomentum < 0) {
+                walkingMomentum = 0;
+                currentWalkState = 0;
+                walkCounter = 0;
+                isDecelarating = false;
+                direction = -1;
+            }
+            
+            if(walkingMomentum > 0) {
+                performMove();
+            }
+        }
+
         repaint();
     }
 
@@ -227,37 +287,79 @@ public class MarioFSM extends JPanel implements ActionListener {
 
         if (marioSprite != null) {
             BufferedImage newMario = marioSprite;
-            if (lastFacingDirection == LEFT && (currentState != State.JUMP_IDLE && currentState != State.JUMP_MOVING))
-                newMario = createFlipped(marioSprite);
-            else if (lastFacingDirection == RIGHT
-                    && (currentState != State.JUMP_IDLE && currentState != State.JUMP_MOVING))
-                newMario = marioMoving;
-            else if (currentState == State.JUMP_IDLE || currentState == State.JUMP_MOVING) {
-                if (lastFacingDirection == LEFT)
-                    newMario = createFlipped(marioJumping);
-                else
-                    newMario = marioJumping;
+
+            if (currentState == State.MOVING){
+                newMario = getCurrentMarioMovementImage();
+            } else if (currentState == State.CROUCHING) {
+                newMario = marioCrouching;
+            } else if (currentState == State.JUMP_IDLE || currentState == State.JUMP_MOVING) {
+                newMario = marioJumping;
+            } else if (currentState == State.IDLE) {
+                if (walkingMomentum > 0) {
+                    newMario = getCurrentMarioMovementImage();
+                } else {
+                    newMario = marioSprite;
+                }
             }
 
-            if (currentState == State.CROUCHING) {
-                // Draw Mario shorter/squashed
-                g.drawImage(newMario, marioX, marioY + 20, 40, 30, null);
-            } else {
-                // Draw Mario normally
-                g.drawImage(newMario, marioX, marioY, 40, 50, null);
-                // if(direction == LEFT) {
-                // g.drawImage(marioSprite, marioX, marioY, -40, 50, null);
-                // } else if (direction == RIGHT)
-                // g.drawImage(marioSprite, marioX, marioY, 40, 50, null);
+            if (lastFacingDirection == LEFT){
+                newMario = createFlipped(newMario);
             }
+
+            int height = newMario.getHeight();
+            
+            final int CROUCHING_HEIGHT = 50;
+            if(height < CROUCHING_HEIGHT) {
+                if(currentState == State.CROUCHING) {
+                    marioY = GROUND_Y + (PNG_MARIO_SPRITE_HEIGHT - height);
+                    // height = newMario.getHeight();
+                    System.out.println("CROUCHING HEIGHT: " + height);
+                    System.out.println("Y POSITION: " + marioY);    
+                } 
+                // else {
+                //     height = newMario.getHeight() + (PNG_MARIO_SPRITE_HEIGHT - newMario.getHeight());
+                // }
+            } else if (currentState != State.JUMP_IDLE && currentState != State.JUMP_MOVING) {
+                marioY = GROUND_Y;
+            }
+            
+            g.drawImage(newMario, marioX, marioY, newMario.getWidth(), height, null);
+
+
+            // if (lastFacingDirection == LEFT && (currentState != State.JUMP_IDLE && currentState != State.JUMP_MOVING))
+            //     newMario = createFlipped(marioMoving);
+            // else if (lastFacingDirection == RIGHT
+            //         && (currentState != State.JUMP_IDLE && currentState != State.JUMP_MOVING))
+            //     newMario = marioMoving;
+            // else if (currentState == State.JUMP_IDLE || currentState == State.JUMP_MOVING) {
+            //     if (lastFacingDirection == LEFT)
+            //         newMario = createFlipped(marioJumping);
+            //     else
+            //         newMario = marioJumping;
+            // }
+
+            // if (currentState == State.CROUCHING) {
+            //     // Draw Mario shorter/squashed
+            //     if (lastFacingDirection == LEFT)
+            //         newMario = createFlipped(marioCrouching);
+            //     else
+            //         newMario = marioCrouching;
+
+            //     g.drawImage(newMario, marioX, marioY, newMario.getWidth(), newMario.getHeight(), null);
+            // } else {
+            //     // Draw Mario normally
+            //     g.drawImage(newMario, marioX, marioY, newMario.getWidth(), newMario.getHeight(), null);
+            //     // if(direction == LEFT) {
+            //     // g.drawImage(marioSprite, marioX, marioY, -40, 50, null);
+            //     // } else if (direction == RIGHT)
+            //     // g.drawImage(marioSprite, marioX, marioY, 40, 50, null);
+            // }
         } else {
             g.setColor(Color.RED);
             if (currentState == State.CROUCHING) {
-                // Draw Mario shorter/squashed
                 // g.drawImage(newMario, marioX, marioY + 20, 40, 30, null);
                 g.fillRect(marioX, marioY + 20, 40, 30);
             } else {
-                // Draw Mario normally
                 g.fillRect(marioX, marioY, 40, 50);
                 // if(direction == LEFT) {
                 // g.drawImage(marioSprite, marioX, marioY, -40, 50, null);
@@ -275,6 +377,38 @@ public class MarioFSM extends JPanel implements ActionListener {
 
         g.setColor(Color.BLACK);
         g.drawString("Current State: " + currentState, 20, 20);
+        g.drawString("Walking Momentum: " + walkingMomentum, 20, 40);
+        g.drawString("Walk Counter: " + walkCounter, 20, 60);
+        g.drawString("isDecelarating: " + isDecelarating, 20, 80);
+    }
+
+    private BufferedImage getCurrentMarioMovementImage() {
+        switch (currentWalkState) {
+            case 1:
+                return marioMoving_1;
+            case 2:
+                return marioMoving_2;
+            case 3:
+                return marioMoving_3;
+            default:
+                return marioMoving;
+        }
+    }
+
+    public void loadSound() {
+        try {
+            File soundFile = new File("../resources/audio/smb_jump-super.wav");
+            if (!soundFile.exists()) {
+                System.err.println("Sound file not found: " + soundFile.getAbsolutePath());
+                return;
+            }
+
+            AudioInputStream audioIn = AudioSystem.getAudioInputStream(soundFile);
+            clip = AudioSystem.getClip();
+            clip.open(audioIn);
+        } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
+            e.printStackTrace();
+        }
     }
 
     private static BufferedImage createFlipped(BufferedImage image) {
@@ -295,5 +429,4 @@ public class MarioFSM extends JPanel implements ActionListener {
         g.dispose();
         return newImage;
     }
-
 }
